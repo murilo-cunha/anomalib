@@ -55,23 +55,28 @@ jobs:
           ln -s $ANOMALIB_DATASET_PATH ./notebooks/datasets
       - name: Coverage
         run: tox -e pre-merge-${{ matrix.tox-env }}
-      - name: Upload coverage report
-        run: |
-          # If the workflow is triggered from PR then it gets the commit id from the PR.
-          # else it uses the commit id of the latest commit. This is because the commit
-          # of the checked-out branch/commit does not exist in the tree as it is grafted.
-          if [ -n "${{ github.event.pull_request.head.sha }}" ]
-          then
-            COMMIT_ID=${{ github.event.pull_request.head.sha }}
-          else
-            COMMIT_ID=${{ github.sha }}
-          fi
-          # Pass token from secrets if available. Otherwise it takes it from the environment variable of the CI
-          curl -Os https://uploader.codecov.io/latest/linux/codecov
-          chmod +x codecov
-          if [ -n "${{ secrets.CODECOV_TOKEN }}" ]
-          then
-            ./codecov -t ${{ secrets.CODECOV_TOKEN }} --sha $COMMIT_ID -U $HTTP_PROXY -f .tox/coverage.xml
-          else
-            ./codecov -t "${CODECOV_TOKEN}"  --sha $COMMIT_ID -U $HTTP_PROXY -f .tox/coverage.xml
-          fi
+      - uses: actions/upload-artifact@v3
+        with:
+          name: coverage
+          path: .tox/coverage.xml
+
+      # - name: Upload coverage report
+      #   run: |
+      #     # If the workflow is triggered from PR then it gets the commit id from the PR.
+      #     # else it uses the commit id of the latest commit. This is because the commit
+      #     # of the checked-out branch/commit does not exist in the tree as it is grafted.
+      #     if [ -n "${{ github.event.pull_request.head.sha }}" ]
+      #     then
+      #       COMMIT_ID=${{ github.event.pull_request.head.sha }}
+      #     else
+      #       COMMIT_ID=${{ github.sha }}
+      #     fi
+      #     # Pass token from secrets if available. Otherwise it takes it from the environment variable of the CI
+      #     curl -Os https://uploader.codecov.io/latest/linux/codecov
+      #     chmod +x codecov
+      #     if [ -n "${{ secrets.CODECOV_TOKEN }}" ]
+      #     then
+      #       ./codecov -t ${{ secrets.CODECOV_TOKEN }} --sha $COMMIT_ID -U $HTTP_PROXY -f .tox/coverage.xml
+      #     else
+      #       ./codecov -t "${CODECOV_TOKEN}"  --sha $COMMIT_ID -U $HTTP_PROXY -f .tox/coverage.xml
+      #     fi
